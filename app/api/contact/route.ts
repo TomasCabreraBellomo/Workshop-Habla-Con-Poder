@@ -29,6 +29,11 @@ type NormalizedContactPayload = {
   acceptedTerms: boolean;
 };
 
+type AppsScriptResponse = {
+  success?: boolean;
+  error?: string;
+};
+
 function normalizeString(value: unknown, maxLength = 500) {
   if (typeof value !== "string") {
     return undefined;
@@ -46,13 +51,23 @@ function normalizePhone(value: unknown) {
   return normalizeString(value, 40)?.replace(/[^\d+()\-\s.]/g, "");
 }
 
+function parseAppsScriptResponse(responseText: string) {
+  try {
+    return JSON.parse(responseText) as AppsScriptResponse;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
 
     if (!webhookUrl) {
+      console.error("Contact submission failed: GOOGLE_SHEETS_WEBHOOK_URL is missing");
+
       return NextResponse.json(
-        { success: false, error: "El webhook de Google Sheets no esta configurado." },
+        { success: false, error: "GOOGLE_SHEETS_WEBHOOK_URL no está configurada" },
         { status: 500 },
       );
     }
@@ -94,13 +109,36 @@ export async function POST(request: Request) {
       cache: "no-store",
     });
 
-    const sheetsResult = (await sheetsResponse.json().catch(() => null)) as
-      | { success?: boolean; error?: string }
-      | null;
+    const sheetsResponseText = await sheetsResponse.text();
+    const sheetsResult = parseAppsScriptResponse(sheetsResponseText);
 
-    if (!sheetsResponse.ok || sheetsResult?.success === false) {
+    if (!sheetsResponse.ok) {
+      console.error("Google Apps Script responded with non-OK status", {
+        status: sheetsResponse.status,
+        statusText: sheetsResponse.statusText,
+        responseText: sheetsResponseText,
+      });
+
       return NextResponse.json(
-        { success: false, error: "No pudimos guardar el contacto en Google Sheets." },
+        {
+          success: false,
+          error: sheetsResponseText || "Google Apps Script no respondio correctamente.",
+        },
+        { status: 502 },
+      );
+    }
+
+    if (sheetsResult?.success === false) {
+      console.error("Google Apps Script returned success false", {
+        error: sheetsResult.error,
+        responseText: sheetsResponseText,
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: sheetsResult.error || "Google Apps Script rechazo el envio.",
+        },
         { status: 502 },
       );
     }
