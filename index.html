@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hablá con Poder: Oratoria y Neurocomunicación – ACN Eventos</title>
+<title>Hablá con Poder: Oratoria y Neurocomunicación. – ACN Eventos</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
 
 :root {
   --bordo: #9d1d3c;
+
+
   --bordo-light: #b8244a;
   --bordo-pale: #f9eaee;
   --navy: #423e5b;
@@ -245,18 +247,6 @@ nav {
   transition: background 0.15s, transform 0.1s;
 }
 .btn-form:hover { background: var(--bordo-light); transform: translateY(-1px); }
-.btn-form:disabled { cursor: not-allowed; opacity: 0.72; transform: none; }
-.form-error {
-  display: none;
-  background: #fff3f5;
-  border: 1px solid rgba(157,29,60,0.25);
-  color: var(--bordo);
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-  font-size: 13px;
-  font-weight: 600;
-}
 .form-success {
   display: none;
   background: var(--bordo-pale);
@@ -462,16 +452,20 @@ nav {
     <div class="sec-title">Reservá tu lugar</div>
     <p class="form-intro">Completá el formulario para asegurar tu participación. Los cupos son limitados.</p>
     <div id="form-area">
+    <form id="inscripcion-form" action="https://formspree.io/f/acneventosyrrpp@gmail.com" method="POST" onsubmit="return enviarFormulario(event)">
+    <!-- Hidden fields for Formspree -->
+    <input type="hidden" name="_subject" value="Nueva inscripción – Workshop Hablá con Poder">
+    <input type="hidden" name="_replyto" id="reply-email">
       <div class="form-grid">
-        <div class="form-group"><label>Nombre *</label><input type="text" id="f-nombre" placeholder="Tu nombre"></div>
-        <div class="form-group"><label>Apellido *</label><input type="text" id="f-apellido" placeholder="Tu apellido"></div>
-        <div class="form-group"><label>E-mail *</label><input type="email" id="f-email" placeholder="tu@email.com"></div>
-        <div class="form-group"><label>Teléfono / WhatsApp</label><input type="tel" id="f-tel" placeholder="+54 381 ..."></div>
-        <div class="form-group"><label>Empresa / Organización</label><input type="text" id="f-empresa" placeholder="Nombre de tu empresa"></div>
-        <div class="form-group"><label>Cargo / Rol</label><input type="text" id="f-cargo" placeholder="Tu cargo actual"></div>
+        <div class="form-group"><label>Nombre *</label><input type="text" id="f-nombre" name="nombre" placeholder="Tu nombre"></div>
+        <div class="form-group"><label>Apellido *</label><input type="text" id="f-apellido" name="apellido" placeholder="Tu apellido"></div>
+        <div class="form-group"><label>E-mail *</label><input type="email" id="f-email" name="email" placeholder="tu@email.com" oninput="document.getElementById('reply-email').value=this.value"></div>
+        <div class="form-group"><label>Teléfono / WhatsApp</label><input type="tel" id="f-tel" name="telefono" placeholder="+54 381 ..."></div>
+        <div class="form-group"><label>Empresa / Organización</label><input type="text" id="f-empresa" name="empresa" placeholder="Nombre de tu empresa"></div>
+        <div class="form-group"><label>Cargo / Rol</label><input type="text" id="f-cargo" name="cargo" placeholder="Tu cargo actual"></div>
         <div class="form-group">
           <label>Sector</label>
-          <select id="f-rubro">
+          <select id="f-rubro" name="sector">
             <option value="">Seleccioná tu sector</option>
             <option>Empresa privada</option>
             <option>Organismo público</option>
@@ -483,7 +477,7 @@ nav {
         </div>
         <div class="form-group">
           <label>Forma de pago</label>
-          <select id="f-pago">
+          <select id="f-pago" name="forma_de_pago">
             <option value="">Seleccioná cómo vas a pagar</option>
             <option>Transferencia bancaria (alias: acneventos)</option>
             <option>Mercado Pago</option>
@@ -494,8 +488,8 @@ nav {
         <input type="checkbox" id="f-terminos">
         <label for="f-terminos">Acepto que mis datos sean utilizados para la gestión de esta inscripción y comunicaciones relacionadas con el evento.</label>
       </div>
-      <div class="form-error" id="form-error" role="alert"></div>
-      <button class="btn-form" id="form-submit" onclick="enviarFormulario()">Completar inscripción →</button>
+      <button class="btn-form" type="submit">Completar inscripción →</button>
+    </form>
     </div>
     <div class="form-success" id="form-success">
       <div class="check">✅</div>
@@ -569,97 +563,38 @@ nav {
 </div>
 
 <script>
-let enviandoFormulario = false;
-
-function valorCampo(id) {
-  return document.getElementById(id).value.trim();
-}
-
-function mostrarError(mensaje) {
-  const errorBox = document.getElementById('form-error');
-  errorBox.textContent = mensaje;
-  errorBox.style.display = 'block';
-}
-
-function limpiarError() {
-  const errorBox = document.getElementById('form-error');
-  errorBox.textContent = '';
-  errorBox.style.display = 'none';
-}
-
-function limpiarFormulario() {
-  ['f-nombre', 'f-apellido', 'f-email', 'f-tel', 'f-empresa', 'f-cargo'].forEach(function(id) {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('f-rubro').value = '';
-  document.getElementById('f-pago').value = '';
-  document.getElementById('f-terminos').checked = false;
-}
-
-async function enviarFormulario() {
-  if (enviandoFormulario) return;
-
-  const nombre = valorCampo('f-nombre');
-  const apellido = valorCampo('f-apellido');
-  const email = valorCampo('f-email');
-  const telefono = valorCampo('f-tel');
+function enviarFormulario(e) {
+  e.preventDefault();
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const apellido = document.getElementById('f-apellido').value.trim();
+  const email = document.getElementById('f-email').value.trim();
   const terminos = document.getElementById('f-terminos').checked;
-  const submitButton = document.getElementById('form-submit');
-
-  limpiarError();
-
-  if (!nombre || !apellido || (!email && !telefono)) {
-    mostrarError('Completá nombre, apellido y al menos un e-mail o teléfono.');
-    return;
+  if (!nombre || !apellido || !email) {
+    alert('Por favor completá al menos nombre, apellido y e-mail.');
+    return false;
   }
-
   if (!terminos) {
-    mostrarError('Aceptá los términos para continuar.');
-    return;
+    alert('Por favor aceptá los términos para continuar.');
+    return false;
   }
-
-  enviandoFormulario = true;
-  submitButton.disabled = true;
-  submitButton.textContent = 'Enviando...';
-
-  try {
-    const response = await fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firstName: nombre,
-        lastName: apellido,
-        email: email,
-        phone: telefono,
-        company: valorCampo('f-empresa'),
-        role: valorCampo('f-cargo'),
-        sector: valorCampo('f-rubro'),
-        paymentMethod: valorCampo('f-pago'),
-        serviceInterest: 'Workshop Habla con Poder',
-        source: 'landing_workshop_habla_con_poder',
-        acceptedTerms: terminos
-      })
-    });
-
-    const result = await response.json().catch(function() {
-      return { message: 'No pudimos procesar la respuesta del servidor.' };
-    });
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.error || 'No pudimos guardar la inscripción.');
+  const form = document.getElementById('inscripcion-form');
+  const data = new FormData(form);
+  fetch('https://formspree.io/f/acneventosyrrpp@gmail.com', {
+    method: 'POST',
+    body: data,
+    headers: { 'Accept': 'application/json' }
+  }).then(response => {
+    if (response.ok) {
+      document.getElementById('form-area').style.display = 'none';
+      document.getElementById('form-success').style.display = 'block';
+      document.getElementById('form-success').scrollIntoView({behavior:'smooth'});
+    } else {
+      alert('Hubo un problema al enviar. Por favor escribinos a acneventosyrrpp@gmail.com');
     }
-
-    limpiarFormulario();
-    document.getElementById('form-area').style.display = 'none';
-    document.getElementById('form-success').style.display = 'block';
-    document.getElementById('form-success').scrollIntoView({ behavior: 'smooth' });
-  } catch (error) {
-    mostrarError(error.message || 'No pudimos guardar la inscripción. Intentá nuevamente.');
-  } finally {
-    enviandoFormulario = false;
-    submitButton.disabled = false;
-    submitButton.textContent = 'Completar inscripción →';
-  }
+  }).catch(() => {
+    alert('Error de conexión. Por favor escribinos a acneventosyrrpp@gmail.com');
+  });
+  return false;
 }
 </script>
 </body>
